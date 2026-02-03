@@ -1,6 +1,5 @@
 package org.example.chatting.common.interceptor;
 
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.chatting.common.entity.User;
 import org.example.chatting.common.utils.JwtUtil;
@@ -10,6 +9,7 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,9 +22,8 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
 
-        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-        // 🔥 STOMP CONNECT 시점
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
 
             String token = accessor.getFirstNativeHeader("Authorization")
@@ -35,10 +34,7 @@ public class StompAuthInterceptor implements ChannelInterceptor {
             User user = userRepository.findById(userId)
                 .orElseThrow();
 
-            StompUserPrincipal principal = new StompUserPrincipal(user, user.getName());
-
-            // 이 WebSocket 연결의 주인 설정
-            accessor.setUser(principal);
+            accessor.setUser(new AuthenticatedUser(user));
         }
 
         return message;

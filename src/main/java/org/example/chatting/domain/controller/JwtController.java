@@ -14,6 +14,6 @@ public class JwtController {
 
     @GetMapping("/api/jwt/{id}")
     public String generateJwtToken(@PathVariable Long id) {
-        return jwtUtil.generateToken(1);
+        return jwtUtil.generateToken(id);
     }
 }
